@@ -34,10 +34,12 @@ class TaskDefinitionProvider
      */
     public function getDefinitions(): array
     {
+        $projectDefinitions = $this->loader->loadFromDirectory($this->getDirectory());
         $definitions = [];
         foreach ($this->siteSetTaskDirectories->getDirectories() as $setName => $directory) {
             foreach ($this->loader->loadFromDirectory($directory) as $identifier => $definition) {
-                if (isset($definitions[$identifier])) {
+                // A project file replaces both, so two sets may share an identifier then.
+                if (isset($definitions[$identifier]) && !isset($projectDefinitions[$identifier])) {
                     throw new InvalidTaskDefinitionException(
                         sprintf(
                             'Scheduler task "%s" is defined by more than one site set: "%s" and "%s" (set "%s"). Override it in config/scheduler/%s.yaml or rename one of them.',
@@ -53,7 +55,7 @@ class TaskDefinitionProvider
                 $definitions[$identifier] = $definition;
             }
         }
-        return array_replace($definitions, $this->loader->loadFromDirectory($this->getDirectory()));
+        return array_replace($definitions, $projectDefinitions);
     }
 
     /**

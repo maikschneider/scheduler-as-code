@@ -124,8 +124,8 @@ EXT:my_sitepackage/Configuration/Sets/Maintenance/
 - A file in `config/scheduler/` with the same name overrides the set's task, so a project
   can adjust, say, the frequency of a task a set ships. Delete the project file to go back
   to the set's version.
-- Two sets shipping the same identifier is an error; override the task in
-  `config/scheduler/` or rename one of them.
+- Two sets shipping the same identifier stop the import, unless a file of that name in
+  `config/scheduler/` replaces both. Otherwise rename one of them.
 
 The badge in the Scheduler module shows which file a task comes from.
 

@@ -110,6 +110,20 @@ final class SiteSetTasksTest extends FunctionalTestCase
         $this->get(TaskDefinitionProvider::class)->getDefinitions();
     }
 
+    #[Test]
+    public function projectFileResolvesAConflictBetweenSets(): void
+    {
+        $this->writeSite(['maintenance', 'conflicting']);
+        file_put_contents(
+            $this->get(TaskDefinitionProvider::class)->getDirectory() . '/nightly-cleanup.yaml',
+            "type: 'cleanup:deletedrecords'\ndescription: 'from project'\nexecution:\n  frequency: '0 4 * * *'\n"
+        );
+
+        $definitions = $this->get(TaskDefinitionProvider::class)->getDefinitions();
+
+        self::assertSame('from project', $definitions['nightly-cleanup']->configuration['description']);
+    }
+
     /**
      * @param list<string> $sets set names without the fixture prefix
      */
