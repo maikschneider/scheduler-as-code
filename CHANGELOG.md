@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Site sets can ship tasks in `Configuration/Sets/<Set>/scheduler/`. They are imported while
   a site uses the set; project files in `config/scheduler/` override them.
 - The Scheduler module badge shows the file a task comes from.
-
 - Task definitions in `config/scheduler/*.yaml`, one task per file, identified by file name.
 - Automatic import on boot whenever the task files changed or the caches were flushed:
   new files create tasks, changed files update them, removed files disable them.
