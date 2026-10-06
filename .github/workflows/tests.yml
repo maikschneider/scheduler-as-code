@@ -153,6 +153,16 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Secrets are not available to pull requests from forks.
+      - name: Upload to Codecov
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: .Build/coverage/clover.xml
+          disable_search: true
+          fail_ci_if_error: true
+
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
