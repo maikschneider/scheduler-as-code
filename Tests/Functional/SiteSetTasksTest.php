@@ -7,6 +7,7 @@ namespace MaikSchneider\SchedulerAsCode\Tests\Functional;
 use MaikSchneider\SchedulerAsCode\Configuration\InvalidTaskDefinitionException;
 use MaikSchneider\SchedulerAsCode\Configuration\TaskDefinitionProvider;
 use MaikSchneider\SchedulerAsCode\Service\SynchronizationResult;
+use MaikSchneider\SchedulerAsCode\Service\TaskStateResolver;
 use MaikSchneider\SchedulerAsCode\Service\TaskSynchronizer;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Yaml\Yaml;
@@ -72,6 +73,28 @@ final class SiteSetTasksTest extends FunctionalTestCase
         self::assertSame('from project', $row['description']);
         self::assertStringEndsWith('/scheduler/nightly-cleanup.yaml', $row['tx_schedulerascode_source']);
         self::assertStringNotContainsString('Sets/', $row['tx_schedulerascode_source']);
+    }
+
+    #[Test]
+    public function projectFileWithTheSetsContentTakesOverWithoutBecomingStale(): void
+    {
+        $this->writeSite(['maintenance']);
+        $this->synchronize();
+        $row = $this->findRow('nightly-cleanup');
+        $recordHash = $row['tx_schedulerascode_record_hash'];
+        self::assertNotSame('', $recordHash);
+        copy(
+            Environment::getProjectPath() . '/' . $row['tx_schedulerascode_source'],
+            $this->get(TaskDefinitionProvider::class)->getDirectory() . '/nightly-cleanup.yaml'
+        );
+
+        $result = $this->synchronize();
+
+        self::assertFalse($result->hasChanges());
+        $row = $this->findRow('nightly-cleanup');
+        self::assertStringNotContainsString('Sets/', $row['tx_schedulerascode_source']);
+        self::assertSame($recordHash, $row['tx_schedulerascode_record_hash']);
+        self::assertFalse($this->get(TaskStateResolver::class)->getStates()[(int)$row['uid']]['stale']);
     }
 
     #[Test]

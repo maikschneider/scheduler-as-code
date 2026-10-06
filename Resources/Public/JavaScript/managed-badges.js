@@ -4,14 +4,23 @@ const settings = TYPO3.settings.schedulerAsCode ?? { tasks: {}, labels: {} };
 // every task file lived in config/scheduler/.
 const sourceOf = (state) => state.source || 'config/scheduler/' + state.identifier + '.yaml';
 
-function createBadge(state) {
+function createBadge(state, uid) {
   const badge = document.createElement('span');
-  badge.classList.add('badge', state.orphaned ? 'badge-warning' : 'badge-info', 'ms-1');
+  badge.classList.add('badge', 'ms-1');
   badge.dataset.schedulerAsCode = state.identifier;
-  badge.textContent = state.orphaned ? settings.labels.orphaned : settings.labels.managed;
-  badge.title = state.orphaned
-    ? settings.labels.orphanedDescription.replace('%s', sourceOf(state))
-    : sourceOf(state);
+  if (state.orphaned) {
+    badge.classList.add('badge-warning');
+    badge.textContent = settings.labels.orphaned;
+    badge.title = settings.labels.orphanedDescription.replace('%s', sourceOf(state));
+  } else if (state.stale) {
+    badge.classList.add('badge-notice');
+    badge.textContent = settings.labels.stale;
+    badge.title = settings.labels.staleDescription.replace('%s', sourceOf(state)).replace('%d', uid);
+  } else {
+    badge.classList.add('badge-info');
+    badge.textContent = settings.labels.managed;
+    badge.title = sourceOf(state);
+  }
   return badge;
 }
 
@@ -22,7 +31,7 @@ function decorate() {
     if (!state || !title || row.querySelector('[data-scheduler-as-code]')) {
       return;
     }
-    title.after(createBadge(state));
+    title.after(createBadge(state, row.dataset.taskId));
   });
 }
 

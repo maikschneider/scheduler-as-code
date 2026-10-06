@@ -73,21 +73,31 @@ class ManagedTaskRepository
     }
 
     /**
-     * @return array<int, array{identifier: string, source: string, orphaned: bool}> keyed by uid
+     * @return list<array<string, mixed>> complete rows of all linked tasks that are not deleted
      */
-    public function findStates(): array
+    public function findManagedTasks(): array
     {
-        $states = [];
-        foreach ($this->findManaged() as $identifier => $task) {
-            $states[$task['uid']] = ['identifier' => $identifier, 'source' => $task['source'], 'orphaned' => $task['hash'] === ''];
-        }
-        return $states;
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        $queryBuilder->getRestrictions()->removeAll();
+        /** @var list<array<string, mixed>> */
+        return $queryBuilder
+            ->select('*')
+            ->from(self::TABLE)
+            ->where(
+                $queryBuilder->expr()->neq('tx_schedulerascode_identifier', $queryBuilder->createNamedParameter('')),
+                $queryBuilder->expr()->eq('deleted', 0)
+            )
+            ->orderBy('uid')
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
+     * @param string $hash hash of the task file
      * @param string $sourceFile absolute path of the task file; stored relative to the project
+     * @param string $recordHash hash of the record right after writing it, see TaskSnapshot
      */
-    public function markManaged(int $uid, string $identifier, string $hash, string $sourceFile): void
+    public function markManaged(int $uid, string $identifier, string $hash, string $sourceFile, string $recordHash): void
     {
         $this->connectionPool->getConnectionForTable(self::TABLE)->update(
             self::TABLE,
@@ -95,8 +105,22 @@ class ManagedTaskRepository
                 'tx_schedulerascode_identifier' => $identifier,
                 'tx_schedulerascode_hash' => $hash,
                 'tx_schedulerascode_source' => $this->relativeToProject($sourceFile),
+                'tx_schedulerascode_record_hash' => $recordHash,
                 'tx_schedulerascode_imported' => (int)$GLOBALS['EXEC_TIME'],
             ],
+            ['uid' => $uid]
+        );
+    }
+
+    /**
+     * For a task whose content stayed the same but now comes from another file. The record is
+     * not written, so its snapshot hash stays valid.
+     */
+    public function updateSource(int $uid, string $sourceFile): void
+    {
+        $this->connectionPool->getConnectionForTable(self::TABLE)->update(
+            self::TABLE,
+            ['tx_schedulerascode_source' => $this->relativeToProject($sourceFile)],
             ['uid' => $uid]
         );
     }

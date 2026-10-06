@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- *Out of sync* badge for file-managed tasks that were changed in the database since their
+  last import or export.
 - Site sets can ship tasks in `Configuration/Sets/<Set>/scheduler/`. They are imported while
   a site uses the set; project files in `config/scheduler/` override them.
 - The Scheduler module badge shows the file a task comes from.

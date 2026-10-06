@@ -7,7 +7,6 @@ namespace MaikSchneider\SchedulerAsCode\Service;
 use MaikSchneider\SchedulerAsCode\Configuration\TaskDefinitionLoader;
 use MaikSchneider\SchedulerAsCode\Configuration\TaskDefinitionProvider;
 use MaikSchneider\SchedulerAsCode\Persistence\ManagedTaskRepository;
-use MaikSchneider\SchedulerAsCode\Persistence\TaskStorageInterface;
 use Symfony\Component\Yaml\Yaml;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -18,7 +17,7 @@ class TaskExporter
 {
     public function __construct(
         private readonly ManagedTaskRepository $managedTaskRepository,
-        private readonly TaskStorageInterface $taskStorage,
+        private readonly TaskSnapshot $taskSnapshot,
         private readonly TaskDefinitionProvider $definitionProvider,
         private readonly TaskDefinitionLoader $loader,
     ) {
@@ -31,7 +30,7 @@ class TaskExporter
      */
     public function export(array $row, ?string $identifier = null): string
     {
-        $configuration = $this->taskStorage->read($row);
+        $configuration = $this->taskSnapshot->getConfiguration($row);
         $identifier ??= (string)($row['tx_schedulerascode_identifier'] ?? '') ?: $this->deriveIdentifier($configuration);
 
         $directory = $this->definitionProvider->getDirectory();
@@ -39,43 +38,14 @@ class TaskExporter
         $file = $directory . '/' . $identifier . '.yaml';
         GeneralUtility::writeFile(
             $file,
-            Yaml::dump($this->normalize($configuration, (int)($row['task_group'] ?? 0)), 4, 2),
+            Yaml::dump($configuration, 4, 2),
             true
         );
 
         // Hash what was written, not what was read, so the round trip through YAML counts.
         $definition = $this->loader->loadFile($file);
-        $this->managedTaskRepository->markManaged((int)$row['uid'], $identifier, $definition->getHash(), $file);
+        $this->managedTaskRepository->markManaged((int)$row['uid'], $identifier, $definition->getHash(), $file, $this->taskSnapshot->getHash($row));
         return $file;
-    }
-
-    /**
-     * Fixed key order and no defaults, so files stay short and diffs stay readable.
-     *
-     * @param array<string, mixed> $configuration
-     * @return array<string, mixed>
-     */
-    private function normalize(array $configuration, int $taskGroup): array
-    {
-        $normalized = ['type' => $configuration['type']];
-        if (($configuration['description'] ?? '') !== '') {
-            $normalized['description'] = $configuration['description'];
-        }
-        $group = $this->managedTaskRepository->findGroupName($taskGroup);
-        if ($group !== '') {
-            $normalized['group'] = $group;
-        }
-        if ($configuration['disabled'] ?? false) {
-            $normalized['disabled'] = true;
-        }
-        if (isset($configuration['priority']) && (int)$configuration['priority'] !== 100) {
-            $normalized['priority'] = (int)$configuration['priority'];
-        }
-        $normalized['execution'] = $configuration['execution'];
-        if (($configuration['parameters'] ?? []) !== []) {
-            $normalized['parameters'] = $configuration['parameters'];
-        }
-        return $normalized;
     }
 
     /**
