@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MaikSchneider\SchedulerAsCode\Middleware;
 
-use MaikSchneider\SchedulerAsCode\Persistence\ManagedTaskRepository;
+use MaikSchneider\SchedulerAsCode\Service\TaskStateResolver;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -23,7 +23,7 @@ final readonly class SchedulerModuleBadges implements MiddlewareInterface
     private const LABELS = 'LLL:EXT:scheduler_as_code/Resources/Private/Language/locallang.xlf:';
 
     public function __construct(
-        private ManagedTaskRepository $managedTaskRepository,
+        private TaskStateResolver $taskStateResolver,
         private PageRenderer $pageRenderer,
         private LanguageServiceFactory $languageServiceFactory,
     ) {
@@ -35,11 +35,13 @@ final readonly class SchedulerModuleBadges implements MiddlewareInterface
         if ($route instanceof Route && in_array($route->getOption('_identifier'), ['scheduler', 'scheduler_manage'], true)) {
             $languageService = $this->languageServiceFactory->createFromUserPreferences($GLOBALS['BE_USER'] ?? null);
             $this->pageRenderer->addInlineSettingArray('schedulerAsCode', [
-                'tasks' => $this->managedTaskRepository->findStates(),
+                'tasks' => $this->taskStateResolver->getStates(),
                 'labels' => [
                     'managed' => $languageService->sL(self::LABELS . 'badge.managed'),
                     'orphaned' => $languageService->sL(self::LABELS . 'badge.orphaned'),
                     'orphanedDescription' => $languageService->sL(self::LABELS . 'badge.orphaned.description'),
+                    'stale' => $languageService->sL(self::LABELS . 'badge.stale'),
+                    'staleDescription' => $languageService->sL(self::LABELS . 'badge.stale.description'),
                 ],
             ]);
             $this->pageRenderer->loadJavaScriptModule('@maikschneider/scheduler-as-code/managed-badges.js');

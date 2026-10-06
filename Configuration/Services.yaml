@@ -21,6 +21,8 @@ services:
     public: true
   MaikSchneider\SchedulerAsCode\Configuration\TaskDefinitionProvider:
     public: true
+  MaikSchneider\SchedulerAsCode\Service\TaskStateResolver:
+    public: true
 
   cache.scheduler_as_code:
     class: TYPO3\CMS\Core\Cache\Frontend\FrontendInterface
