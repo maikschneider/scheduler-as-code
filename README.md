@@ -1,66 +1,26 @@
-# Scheduler as Code
+<div align="center">
 
-Manage TYPO3 scheduler tasks as YAML files in version control.
+![Extension icon](Resources/Public/Icons/Extension.svg)
 
-Scheduler tasks normally live only in the database, so every environment drifts: a task
-created on staging never reaches production, and nobody can tell from the repository which
-tasks a project is supposed to run. This extension makes the repository the source of truth.
+# TYPO3 extension `scheduler_as_code`
 
-| | |
-|---|---|
-| **TYPO3** | 13.4 LTS, 14.3 LTS |
-| **PHP** | 8.2, 8.3, 8.4 |
-| **Extension key** | `scheduler_as_code` |
-| **License** | GPL-2.0-or-later |
+[![Latest version](https://typo3-badges.dev/badge/scheduler_as_code/version/shields.svg)](https://extensions.typo3.org/extension/scheduler_as_code)
+[![Supported TYPO3 versions](https://typo3-badges.dev/badge/scheduler_as_code/typo3/shields.svg)](https://extensions.typo3.org/extension/scheduler_as_code)
+[![Supported PHP versions](https://img.shields.io/packagist/dependency-v/maikschneider/scheduler-as-code/php?logo=php)](https://packagist.org/packages/maikschneider/scheduler-as-code)
+[![Tests](https://img.shields.io/github/actions/workflow/status/maikschneider/scheduler-as-code/tests.yml?label=tests&logo=github)](https://github.com/maikschneider/scheduler-as-code/actions/workflows/tests.yml)
+[![CGL](https://img.shields.io/github/actions/workflow/status/maikschneider/scheduler-as-code/sca.yml?label=cgl&logo=github)](https://github.com/maikschneider/scheduler-as-code/actions/workflows/sca.yml)
+[![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue.svg)](LICENSE.md)
 
-> **Status:** alpha. The file format may still change.
+</div>
 
-The full documentation lives in [`Documentation/`](Documentation/Index.rst) and is
-rendered on [docs.typo3.org](https://docs.typo3.org/p/maikschneider/scheduler-as-code/main/en-us/).
-
-## How it works
-
-- **Task files** live in `config/scheduler/`, one task per file.
-- **Import is automatic.** When TYPO3 boots and the task files changed, or the caches were
-  flushed, new files create tasks and changed files update them. A regular deployment that
-  flushes caches needs no extra step.
-- **Removing a file disables its task.** The task stays in the database, marked
-  *File removed* in the Scheduler module. Restoring the file enables it again.
-- **Files win.** A file-managed task that is deleted in the backend comes back on the next
-  import.
-- **The Scheduler module marks file-managed tasks** with a *Managed in file* badge.
-- **Edits in the backend are flagged.** A file-managed task changed in the database since
-  its last import or export shows *Out of sync*. The edit is kept until the file changes,
-  which overwrites it. To keep it, write it to the file with `scheduler:export <uid> --force`.
-
-Runtime state (last execution, running executions, failures) is never touched by an import,
-and running a task does not count as an edit.
-
-## Getting started
-
-Export the tasks you already have, then commit the files:
-
-```bash
-vendor/bin/typo3 scheduler:export
-git add config/scheduler
-```
-
-| Command | |
-|---|---|
-| `scheduler:export` | Export all tasks that are not linked to a file yet |
-| `scheduler:export 3 7` | Export the tasks with uid 3 and 7 |
-| `scheduler:export 3 --identifier=nightly-cleanup` | Choose the file name |
-| `scheduler:export --force` | Also re-export linked tasks, overwriting their files |
-
-Exported tasks are linked to their file at once, so the next import finds them unchanged.
-
-## Task files
-
-The file name, without extension, is the task's identifier and links the file to its database
-record. Renaming a file therefore creates a new task and disables the old one.
+This TYPO3 extension keeps **scheduler tasks in YAML files** under version control. Scheduler tasks normally live
+only in the database, so every environment drifts: a task created on staging never reaches production, and the
+repository cannot tell which tasks a project is supposed to run. With this extension, the files are the source of
+truth and the database follows them.
 
 ```yaml
 # config/scheduler/cleanup-deleted.yaml
+
 type: 'cleanup:deletedrecords'
 description: 'Remove deleted records older than 30 days'
 group: 'Maintenance'
@@ -71,93 +31,82 @@ parameters:
     min-age: 30
 ```
 
-| Key | | |
-|---|---|---|
-| `type` | required | A schedulable console command, or a task class |
-| `description` | | Shown in the Scheduler module |
-| `group` | | Task group by name; created if it does not exist |
-| `disabled` | | `true` to import the task disabled |
-| `priority` | | `50`, `100` (default) or `150`; TYPO3 14 only |
-| `execution.frequency` | | Cron expression, or an interval in seconds |
-| `execution.start` | | First run; required for a task without frequency, which runs once |
-| `execution.end` | | Last run |
-| `execution.multiple` | | `true` to allow parallel executions |
-| `parameters` | | Task settings, see below |
+Commit the file and deploy. The task appears in the Scheduler module on the next request, with no extra deployment
+step.
 
-Dates accept anything PHP's `DateTimeImmutable` understands, e.g. `'2026-01-01 04:00'`.
+## ✨ Features
 
-### Parameters
+**[Automatic import](https://docs.typo3.org/p/maikschneider/scheduler-as-code/main/en-us/Deployment/Index.html)**: Runs when TYPO3 boots after the task files changed or the caches were flushed
+* New files create tasks, changed files update them, removed files disable them
+* A task deleted in the backend comes back while its file exists
+* Last execution, running executions and failures are never touched
 
-For **console commands**, arguments and options are plain maps. A flag is `true`:
+**[Export](https://docs.typo3.org/p/maikschneider/scheduler-as-code/main/en-us/Usage/Index.html#usage-export)**: `scheduler:export` turns existing tasks into task files and links them
 
-```yaml
-parameters:
-  arguments:
-    table: sys_log
-  options:
-    min-age: 30
-    dry-run: true
-```
+**[Task files](https://docs.typo3.org/p/maikschneider/scheduler-as-code/main/en-us/Configuration/TaskFiles.html)**: Console commands and task classes, cron expressions or intervals
+* [Arguments and options](https://docs.typo3.org/p/maikschneider/scheduler-as-code/main/en-us/Configuration/Parameters.html) as plain maps
+* Task groups by name, created on demand
 
-For **task classes**, parameters are the task's own settings and differ between TYPO3
-versions: TCA field names on TYPO3 14, class properties on TYPO3 13.
+**[Site sets](https://docs.typo3.org/p/maikschneider/scheduler-as-code/main/en-us/Configuration/SiteSets.html)**: Extensions ship tasks with a site set
+* Imported while a site uses the set, disabled when none does
+* A project file overrides the set's task
 
-```yaml
-type: 'TYPO3\CMS\Scheduler\Task\OptimizeDatabaseTableTask'
-execution:
-  frequency: 86400
-parameters:
-  selected_tables:          # TYPO3 13: selectedTables
-    - sys_log
-    - sys_history
-```
+**[Badges in the Scheduler module](https://docs.typo3.org/p/maikschneider/scheduler-as-code/main/en-us/Usage/Index.html#usage-backend)**: See at a glance which tasks come from a file
+* *Managed in file*, with the source file on hover
+* *Out of sync* for tasks changed in the backend since their last import or export
+* *File removed* for tasks whose file is gone
 
-`scheduler:export` writes the right names for the running version.
+## 🔥 Installation
 
-## Site sets
+### Requirements
 
-Extensions can ship tasks with a [site set](https://docs.typo3.org/permalink/t3coreapi:site-sets):
-put task files into `Configuration/Sets/<Set>/scheduler/`.
+* TYPO3 13.4 LTS or 14.3 LTS
+* PHP 8.2+
 
-```
-EXT:my_sitepackage/Configuration/Sets/Maintenance/
-├── config.yaml
-└── scheduler/
-    └── nightly-cleanup.yaml
-```
+### Composer
 
-- A set's tasks are imported while at least one site uses the set, directly or as a
-  dependency of another set. Once no site uses it any more, its tasks are disabled.
-- A file in `config/scheduler/` with the same name overrides the set's task, so a project
-  can adjust, say, the frequency of a task a set ships. Delete the project file to go back
-  to the set's version.
-- Two sets shipping the same identifier stop the import, unless a file of that name in
-  `config/scheduler/` replaces both. Otherwise rename one of them.
-
-The badge in the Scheduler module shows which file a task comes from.
-
-TYPO3 caches site configuration, so after editing a site's `config.yaml` by hand, flush the
-caches for a changed set list to take effect. Changes saved in the Sites module do this
-automatically.
-
-## Troubleshooting
-
-Import problems are logged, never shown to visitors:
-
-- A file that is not valid YAML, or misses `type` or `execution`, stops the import until the
-  file changes.
-- A task whose type does not exist (e.g. an uninstalled extension) is skipped; the others
-  are imported.
-- If the database schema is not up to date yet during a deployment, the import is retried
-  on the next boot.
-
-## Installation
+[![Packagist](https://img.shields.io/packagist/v/maikschneider/scheduler-as-code?label=version&logo=packagist)](https://packagist.org/packages/maikschneider/scheduler-as-code)
+[![Packagist Downloads](https://img.shields.io/packagist/dt/maikschneider/scheduler-as-code?color=brightgreen)](https://packagist.org/packages/maikschneider/scheduler-as-code)
 
 ```bash
 composer require maikschneider/scheduler-as-code
+```
+
+### TER
+
+[![TER version](https://typo3-badges.dev/badge/scheduler_as_code/version/shields.svg)](https://extensions.typo3.org/extension/scheduler_as_code)
+[![TER downloads](https://typo3-badges.dev/badge/scheduler_as_code/downloads/shields.svg)](https://extensions.typo3.org/extension/scheduler_as_code)
+
+Download the zip file from [TYPO3 extension repository (TER)](https://extensions.typo3.org/extension/scheduler_as_code).
+
+## 📂 Setup
+
+Create the extension's database columns:
+
+```bash
 vendor/bin/typo3 extension:setup
 ```
 
-## Development
+Then export the tasks you already have and commit them:
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+```bash
+vendor/bin/typo3 scheduler:export
+git add config/scheduler
+```
+
+From now on, change tasks in their files. See
+[Usage](https://docs.typo3.org/p/maikschneider/scheduler-as-code/main/en-us/Usage/Index.html) for what each change
+does to a task.
+
+## 📙 Documentation
+
+Please have a look at the
+[official extension documentation](https://docs.typo3.org/p/maikschneider/scheduler-as-code/main/en-us/Index.html).
+
+## 🧑‍💻 Contributing
+
+Please have a look at [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## ⭐ License
+
+This project is licensed under [GNU General Public License 2.0 (or later)](LICENSE.md).
