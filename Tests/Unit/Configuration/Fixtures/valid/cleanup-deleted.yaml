@@ -1,0 +1,6 @@
+description: 'Remove deleted records older than 30 days'
+command: 'cleanup:deletedrecords'
+options:
+  min-age: 30
+frequency: '0 3 * * *'
+group: 'Maintenance'

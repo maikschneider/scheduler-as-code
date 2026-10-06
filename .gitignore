@@ -1,0 +1,14 @@
+vendor/
+public/
+!Resources/Public
+var/
+bin/
+.idea
+.phpunit.cache
+.php-cs-fixer.cache
+php-cs-fixer.xml
+phpstan.xml
+config/sites/
+config/system/
+.Build
+.vscode/

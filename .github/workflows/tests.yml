@@ -1,0 +1,68 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - 'renovate/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: Unit (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        typo3-version: ["13.4", "14.3"]
+        php-version: ["8.2", "8.3", "8.4"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer update --with=typo3/cms-core:"^${{ matrix.typo3-version }}"
+
+      - name: Run unit tests
+        run: vendor/bin/phpunit --testsuite Unit
+
+  functional-tests:
+    name: Functional (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        typo3-version: ["13.4", "14.3"]
+        php-version: ["8.2", "8.3", "8.4"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup DDEV
+        uses: ddev/github-action-setup-ddev@v1
+        with:
+          autostart: false
+
+      - name: Configure and start DDEV
+        run: |
+          ddev config --project-type=typo3 --php-version=${{ matrix.php-version }}
+          ddev start
+
+      - name: Install Composer dependencies
+        run: |
+          ddev composer config github-oauth.github.com ${{ secrets.GITHUB_TOKEN }}
+          ddev composer update --with=typo3/cms-core:"^${{ matrix.typo3-version }}"
+
+      - name: Run functional tests
+        run: ddev exec vendor/bin/phpunit --testsuite Functional

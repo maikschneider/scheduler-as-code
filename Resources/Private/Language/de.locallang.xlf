@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.0" xmlns:t3="http://typo3.org/schemas/xliff">
+	<file source-language="en" target-language="de" datatype="plaintext" original="messages" date="2026-10-06T00:00:00Z" product-name="scheduler_as_code">
+		<header/>
+		<body>
+			<trans-unit id="badge.managed">
+				<source>Managed in file</source>
+				<target>In Datei verwaltet</target>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

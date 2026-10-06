@@ -1,0 +1,21 @@
+name: scheduler-as-code
+type: typo3
+docroot: public
+php_version: "8.2"
+webserver_type: apache-fpm
+xdebug_enabled: false
+database:
+    type: mariadb
+    version: "10.11"
+use_dns_when_possible: true
+composer_version: "2"
+timezone: Europe/Berlin
+
+# Credentials for typo3/testing-framework functional tests. It creates and drops its own
+# databases per test case, which the project user is not allowed to do.
+web_environment:
+    - typo3DatabaseDriver=pdo_mysql
+    - typo3DatabaseName=db
+    - typo3DatabaseUsername=root
+    - typo3DatabasePassword=root
+    - typo3DatabaseHost=db

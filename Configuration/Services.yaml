@@ -1,0 +1,11 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  MaikSchneider\SchedulerAsCode\:
+    resource: '../Classes/*'
+    exclude:
+      - '../Classes/Configuration/TaskDefinition.php'
+      - '../Classes/Configuration/InvalidTaskDefinitionException.php'
