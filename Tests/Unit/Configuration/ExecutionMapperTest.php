@@ -15,6 +15,7 @@ final class ExecutionMapperTest extends UnitTestCase
     {
         $now = time();
         $execution = (new ExecutionMapper())->toExecution(['frequency' => '0 3 * * *'], $now);
+        self::assertSame($now - 1, (int)$execution->getStart());
 
         $next = (int)$execution->getNextExecution();
 
@@ -27,6 +28,7 @@ final class ExecutionMapperTest extends UnitTestCase
     {
         $now = time();
         $execution = (new ExecutionMapper())->toExecution(['frequency' => 3600], $now);
+        self::assertSame($now - 1, (int)$execution->getStart());
 
         self::assertGreaterThan($now + 3500, (int)$execution->getNextExecution());
     }
