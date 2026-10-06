@@ -1,0 +1,31 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Documentation/**'
+      - '.github/workflows/documentation.yml'
+  pull_request:
+    paths:
+      - 'Documentation/**'
+      - '.github/workflows/documentation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    name: Render
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Render the documentation, failing on any warning
+        run: |
+          mkdir -p Documentation-GENERATED-temp
+          docker run --rm --pull always -v "$(pwd)":/project \
+            ghcr.io/typo3-documentation/render-guides:latest \
+            --config=Documentation --no-progress --fail-on-log
