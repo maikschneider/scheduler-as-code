@@ -180,6 +180,32 @@ final class TaskSynchronizationTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function onlyTheSettingsOfATaskClassAreExported(): void
+    {
+        if ($this->isTypo3v14()) {
+            self::markTestSkipped('TYPO3 14 only runs task types registered in TCA.');
+        }
+        $this->writeTask('fixture', <<<YAML
+            type: 'MaikSchneider\\SchedulerAsCodeFixture\\Task\\FixtureTask'
+            execution:
+              frequency: 60
+            parameters:
+              label: nightly
+            YAML);
+        $this->synchronize();
+        $row = $this->findRow('fixture');
+
+        $exported = (string)file_get_contents($this->get(TaskExporter::class)->export($row));
+
+        self::assertStringContainsString('label: nightly', $exported);
+        self::assertStringContainsString('lastSeen: null', $exported);
+        self::assertStringNotContainsString('neverSet', $exported);
+        self::assertStringNotContainsString('instances', $exported);
+        self::assertStringNotContainsString('taskUid', $exported);
+        self::assertFalse($this->synchronize()->hasChanges());
+    }
+
+    #[Test]
     public function invalidDateIsReportedWithoutStoppingOtherTasks(): void
     {
         $this->writeTask('broken', "type: 'cleanup:deletedrecords'\nexecution:\n  frequency: 60\n  start: 'next full moon'\n");
