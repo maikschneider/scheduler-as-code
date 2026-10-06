@@ -39,13 +39,3 @@ Features
     failures are never overwritten by an import.
 *   Supports TYPO3 13.4 LTS, where tasks are serialized objects, and TYPO3 14.3
     LTS, where tasks are TCA records.
-
-..  _alternatives:
-
-How it compares
-===============
-
-`helhum/typo3-crontab <https://github.com/helhum/typo3-crontab>`__ also defines
-tasks in configuration, but runs them with its own scheduler instead of the
-:sql:`tx_scheduler_task` table. Scheduler as Code keeps the core scheduler, its
-backend module and its CLI commands, and only adds the files as the source of truth.
