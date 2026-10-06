@@ -56,8 +56,9 @@ class TaskSnapshot
     public function getHash(array $row): string
     {
         $configuration = $this->getConfiguration($row);
-        // The scheduler disables a single-run task once it ran; that is not an edit.
-        if (!isset($configuration['execution']['frequency'])) {
+        // The scheduler disables a single-run task when it runs; that is not an edit. Every run
+        // records lastexecution_time, so a disable without one came from someone else.
+        if (!isset($configuration['execution']['frequency']) && (int)($row['lastexecution_time'] ?? 0) > 0) {
             unset($configuration['disabled']);
         }
         return (new TaskDefinition('', $configuration, ''))->getHash();

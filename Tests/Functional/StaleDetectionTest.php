@@ -96,13 +96,27 @@ final class StaleDetectionTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function singleRunTaskDisabledAfterItsRunIsInSync(): void
+    public function singleRunTaskIsInSyncAfterItsRun(): void
     {
+        $this->importCSVDataSet(__DIR__ . '/Fixtures/be_users.csv');
+        $this->setUpBackendUser(1);
         $uid = $this->import("type: 'cleanup:deletedrecords'\nexecution:\n  start: '2026-01-01 04:00'\n");
+        $task = $this->get(SchedulerTaskRepository::class)->findByUid($uid);
+
+        $this->get(Scheduler::class)->executeTask($task);
+
+        self::assertGreaterThan(0, (int)$this->findRow($uid)['lastexecution_time']);
+        self::assertFalse($this->getState($uid)['stale']);
+    }
+
+    #[Test]
+    public function disablingASingleRunTaskBeforeItsRunMakesItStale(): void
+    {
+        $uid = $this->import("type: 'cleanup:deletedrecords'\nexecution:\n  start: '2030-01-01 04:00'\n");
 
         $this->updateRow($uid, ['disable' => 1]);
 
-        self::assertFalse($this->getState($uid)['stale']);
+        self::assertTrue($this->getState($uid)['stale']);
     }
 
     #[Test]
