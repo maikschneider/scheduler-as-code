@@ -4,7 +4,7 @@ const settings = TYPO3.settings.schedulerAsCode ?? { tasks: {}, labels: {} };
 // every task file lived in config/scheduler/.
 const sourceOf = (state) => state.source || 'config/scheduler/' + state.identifier + '.yaml';
 
-function createBadge(state) {
+function createBadge(state, uid) {
   const badge = document.createElement('span');
   badge.classList.add('badge', 'ms-1');
   badge.dataset.schedulerAsCode = state.identifier;
@@ -15,7 +15,7 @@ function createBadge(state) {
   } else if (state.stale) {
     badge.classList.add('badge-notice');
     badge.textContent = settings.labels.stale;
-    badge.title = settings.labels.staleDescription.replace('%s', sourceOf(state));
+    badge.title = settings.labels.staleDescription.replace('%s', sourceOf(state)).replace('%d', uid);
   } else {
     badge.classList.add('badge-info');
     badge.textContent = settings.labels.managed;
@@ -31,7 +31,7 @@ function decorate() {
     if (!state || !title || row.querySelector('[data-scheduler-as-code]')) {
       return;
     }
-    title.after(createBadge(state));
+    title.after(createBadge(state, row.dataset.taskId));
   });
 }
 

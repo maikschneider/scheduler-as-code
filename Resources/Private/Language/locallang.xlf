@@ -16,7 +16,7 @@
 				<source>Out of sync</source>
 			</trans-unit>
 			<trans-unit id="badge.stale.description">
-				<source>Changed in the database since the last import or export of %s. Run scheduler:export --force to keep the changes, or the next change of the file overwrites them.</source>
+				<source>Changed in the database since the last import or export of %s. Run scheduler:export %d --force to keep the changes, or the next change of the file overwrites them.</source>
 			</trans-unit>
 		</body>
 	</file>

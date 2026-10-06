@@ -20,8 +20,8 @@
 				<target>Nicht synchron</target>
 			</trans-unit>
 			<trans-unit id="badge.stale.description">
-				<source>Changed in the database since the last import or export of %s. Run scheduler:export --force to keep the changes, or the next change of the file overwrites them.</source>
-				<target>Seit dem letzten Import oder Export von %s in der Datenbank geändert. Führen Sie scheduler:export --force aus, um die Änderungen zu übernehmen, sonst überschreibt sie die nächste Änderung der Datei.</target>
+				<source>Changed in the database since the last import or export of %s. Run scheduler:export %d --force to keep the changes, or the next change of the file overwrites them.</source>
+				<target>Seit dem letzten Import oder Export von %s in der Datenbank geändert. Führen Sie scheduler:export %d --force aus, um die Änderungen zu übernehmen, sonst überschreibt sie die nächste Änderung der Datei.</target>
 			</trans-unit>
 		</body>
 	</file>

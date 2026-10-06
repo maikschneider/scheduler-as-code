@@ -28,7 +28,7 @@ tasks a project is supposed to run. This extension makes the repository the sour
 - **The Scheduler module marks file-managed tasks** with a *Managed in file* badge.
 - **Edits in the backend are flagged.** A file-managed task changed in the database since
   its last import or export shows *Out of sync*. The edit is kept until the file changes,
-  which overwrites it. To keep it, write it to the file with `scheduler:export --force`.
+  which overwrites it. To keep it, write it to the file with `scheduler:export <uid> --force`.
 
 Runtime state (last execution, running executions, failures) is never touched by an import,
 and running a task does not count as an edit.
