@@ -6,8 +6,8 @@ function createBadge(state) {
   badge.dataset.schedulerAsCode = state.identifier;
   badge.textContent = state.orphaned ? settings.labels.orphaned : settings.labels.managed;
   badge.title = state.orphaned
-    ? settings.labels.orphanedDescription.replace('%s', state.identifier)
-    : 'config/scheduler/' + state.identifier + '.yaml';
+    ? settings.labels.orphanedDescription.replace('%s', state.source)
+    : state.source;
   return badge;
 }
 

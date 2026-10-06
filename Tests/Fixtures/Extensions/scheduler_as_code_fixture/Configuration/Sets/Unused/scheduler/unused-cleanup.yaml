@@ -1,0 +1,4 @@
+type: 'cleanup:deletedrecords'
+description: 'from unused set'
+execution:
+  frequency: '0 3 * * *'

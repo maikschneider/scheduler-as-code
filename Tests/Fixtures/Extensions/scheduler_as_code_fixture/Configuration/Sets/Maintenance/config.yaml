@@ -1,0 +1,4 @@
+name: maikschneider/scheduler-as-code-fixture-maintenance
+label: 'Fixture Maintenance'
+dependencies:
+  - maikschneider/scheduler-as-code-fixture-base

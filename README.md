@@ -107,6 +107,32 @@ parameters:
 
 `scheduler:export` writes the right names for the running version.
 
+## Site sets
+
+Extensions can ship tasks with a [site set](https://docs.typo3.org/permalink/t3coreapi:site-sets):
+put task files into `Configuration/Sets/<Set>/scheduler/`.
+
+```
+EXT:my_sitepackage/Configuration/Sets/Maintenance/
+├── config.yaml
+└── scheduler/
+    └── nightly-cleanup.yaml
+```
+
+- A set's tasks are imported while at least one site uses the set, directly or as a
+  dependency of another set. Once no site uses it any more, its tasks are disabled.
+- A file in `config/scheduler/` with the same name overrides the set's task, so a project
+  can adjust, say, the frequency of a task a set ships. Delete the project file to go back
+  to the set's version.
+- Two sets shipping the same identifier is an error; override the task in
+  `config/scheduler/` or rename one of them.
+
+The badge in the Scheduler module shows which file a task comes from.
+
+TYPO3 caches site configuration, so after editing a site's `config.yaml` by hand, flush the
+caches for a changed set list to take effect. Changes saved in the Sites module do this
+automatically.
+
 ## Troubleshooting
 
 Import problems are logged, never shown to visitors:

@@ -45,7 +45,7 @@ class TaskExporter
 
         // Hash what was written, not what was read, so the round trip through YAML counts.
         $definition = $this->loader->loadFile($file);
-        $this->managedTaskRepository->markManaged((int)$row['uid'], $identifier, $definition->getHash());
+        $this->managedTaskRepository->markManaged((int)$row['uid'], $identifier, $definition->getHash(), $file);
         return $file;
     }
 

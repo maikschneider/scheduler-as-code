@@ -34,6 +34,10 @@ class TaskSynchronizer
             $existing = $managed[$identifier] ?? null;
             $hash = $definition->getHash();
             if ($existing !== null && $existing['hash'] === $hash && $existing['deleted'] === 0) {
+                // Same content from another file, e.g. a project file overriding a set's task.
+                if ($existing['source'] !== $this->managedTaskRepository->relativeToProject($definition->sourceFile)) {
+                    $this->managedTaskRepository->markManaged($existing['uid'], $identifier, $hash, $definition->sourceFile);
+                }
                 continue;
             }
             try {
@@ -43,7 +47,7 @@ class TaskSynchronizer
                 $result->failed[$identifier] = $e->getMessage();
                 continue;
             }
-            $this->managedTaskRepository->markManaged($uid, $identifier, $hash);
+            $this->managedTaskRepository->markManaged($uid, $identifier, $hash, $definition->sourceFile);
             if ($existing === null) {
                 $result->created[] = $identifier;
             } else {

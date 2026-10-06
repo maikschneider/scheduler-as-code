@@ -12,8 +12,8 @@
 				<target>Datei entfernt</target>
 			</trans-unit>
 			<trans-unit id="badge.orphaned.description">
-				<source>config/scheduler/%s.yaml no longer exists, so the task was disabled. Delete the task, or restore the file to import it again.</source>
-				<target>config/scheduler/%s.yaml existiert nicht mehr, daher wurde die Aufgabe deaktiviert. Löschen Sie die Aufgabe oder stellen Sie die Datei wieder her, um sie erneut zu importieren.</target>
+				<source>%s no longer exists, so the task was disabled. Delete the task, or restore the file to import it again.</source>
+				<target>%s existiert nicht mehr, daher wurde die Aufgabe deaktiviert. Löschen Sie die Aufgabe oder stellen Sie die Datei wieder her, um sie erneut zu importieren.</target>
 			</trans-unit>
 		</body>
 	</file>

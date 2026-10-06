@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MaikSchneider\SchedulerAsCode\Persistence;
 
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
@@ -25,14 +26,14 @@ class ManagedTaskRepository
      * Includes deleted records, so that a task deleted in the backend comes back while its file
      * still exists.
      *
-     * @return array<string, array{uid: int, deleted: int, hash: string}> keyed by identifier
+     * @return array<string, array{uid: int, deleted: int, hash: string, source: string}> keyed by identifier
      */
     public function findManaged(): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
         $queryBuilder->getRestrictions()->removeAll();
         $rows = $queryBuilder
-            ->select('uid', 'deleted', 'tx_schedulerascode_identifier', 'tx_schedulerascode_hash')
+            ->select('uid', 'deleted', 'tx_schedulerascode_identifier', 'tx_schedulerascode_hash', 'tx_schedulerascode_source')
             ->from(self::TABLE)
             ->where($queryBuilder->expr()->neq('tx_schedulerascode_identifier', $queryBuilder->createNamedParameter('')))
             ->orderBy('uid')
@@ -45,6 +46,7 @@ class ManagedTaskRepository
                 'uid' => (int)$row['uid'],
                 'deleted' => (int)$row['deleted'],
                 'hash' => (string)$row['tx_schedulerascode_hash'],
+                'source' => (string)$row['tx_schedulerascode_source'],
             ];
         }
         return $managed;
@@ -71,24 +73,28 @@ class ManagedTaskRepository
     }
 
     /**
-     * @return array<int, array{identifier: string, orphaned: bool}> keyed by uid
+     * @return array<int, array{identifier: string, source: string, orphaned: bool}> keyed by uid
      */
     public function findStates(): array
     {
         $states = [];
         foreach ($this->findManaged() as $identifier => $task) {
-            $states[$task['uid']] = ['identifier' => $identifier, 'orphaned' => $task['hash'] === ''];
+            $states[$task['uid']] = ['identifier' => $identifier, 'source' => $task['source'], 'orphaned' => $task['hash'] === ''];
         }
         return $states;
     }
 
-    public function markManaged(int $uid, string $identifier, string $hash): void
+    /**
+     * @param string $sourceFile absolute path of the task file; stored relative to the project
+     */
+    public function markManaged(int $uid, string $identifier, string $hash, string $sourceFile): void
     {
         $this->connectionPool->getConnectionForTable(self::TABLE)->update(
             self::TABLE,
             [
                 'tx_schedulerascode_identifier' => $identifier,
                 'tx_schedulerascode_hash' => $hash,
+                'tx_schedulerascode_source' => $this->relativeToProject($sourceFile),
                 'tx_schedulerascode_imported' => (int)$GLOBALS['EXEC_TIME'],
             ],
             ['uid' => $uid]
@@ -159,5 +165,11 @@ class ManagedTaskRepository
             ->executeQuery()
             ->fetchOne();
         return $name === false ? '' : (string)$name;
+    }
+
+    public function relativeToProject(string $file): string
+    {
+        $projectPath = Environment::getProjectPath() . '/';
+        return str_starts_with($file, $projectPath) ? substr($file, strlen($projectPath)) : $file;
     }
 }
