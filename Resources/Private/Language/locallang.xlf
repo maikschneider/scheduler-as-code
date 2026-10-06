@@ -10,7 +10,7 @@
 				<source>File removed</source>
 			</trans-unit>
 			<trans-unit id="badge.orphaned.description">
-				<source>config/scheduler/%s.yaml no longer exists, so the task was disabled. Delete the task, or restore the file to import it again.</source>
+				<source>%s no longer exists, so the task was disabled. Delete the task, or restore the file to import it again.</source>
 			</trans-unit>
 		</body>
 	</file>

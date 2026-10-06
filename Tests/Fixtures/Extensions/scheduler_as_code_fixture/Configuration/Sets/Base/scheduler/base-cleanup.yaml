@@ -1,0 +1,4 @@
+type: 'cleanup:deletedrecords'
+description: 'from base set'
+execution:
+  frequency: '0 3 * * *'

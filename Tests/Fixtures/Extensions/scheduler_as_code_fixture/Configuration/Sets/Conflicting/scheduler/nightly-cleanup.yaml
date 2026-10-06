@@ -1,0 +1,4 @@
+type: 'cleanup:deletedrecords'
+description: 'from conflicting set'
+execution:
+  frequency: '0 3 * * *'

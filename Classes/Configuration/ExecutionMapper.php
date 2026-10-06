@@ -24,7 +24,10 @@ final class ExecutionMapper
     {
         $frequency = $configuration['frequency'] ?? null;
         $execution = new Execution();
-        $execution->setStart(isset($configuration['start']) ? $this->toTimestamp($configuration['start']) : $now);
+        // Execution::isStarted() compares start < time(), so a start of "now" counts as not yet
+        // started and the first run would be scheduled for this very second, regardless of the
+        // frequency. One second earlier lets the frequency decide.
+        $execution->setStart(isset($configuration['start']) ? $this->toTimestamp($configuration['start']) : $now - 1);
         $execution->setEnd(isset($configuration['end']) ? $this->toTimestamp($configuration['end']) : 0);
         $execution->setMultiple((bool)($configuration['multiple'] ?? false));
 
