@@ -25,6 +25,7 @@
 	"require": {
 		"php": "^8.2",
 		"symfony/yaml": "^7.0",
+		"typo3/cms-backend": "^13.4 || ^14.3",
 		"typo3/cms-core": "^13.4 || ^14.3",
 		"typo3/cms-scheduler": "^13.4 || ^14.3"
 	},
@@ -62,6 +63,9 @@
 	},
 	"extra": {
 		"typo3/cms": {
+			"Package": {
+				"providesPackages": {}
+			},
 			"cms-package-dir": "{$vendor-dir}/typo3/cms",
 			"extension-key": "scheduler_as_code",
 			"version": "0.1.0",

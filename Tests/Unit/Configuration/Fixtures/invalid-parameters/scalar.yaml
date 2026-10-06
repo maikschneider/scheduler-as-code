@@ -1,3 +1,4 @@
 type: 'cache:flush'
 execution:
   frequency: 60
+parameters: 'nope'

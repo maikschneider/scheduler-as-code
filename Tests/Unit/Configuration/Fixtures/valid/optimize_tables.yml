@@ -1,6 +1,7 @@
 type: 'TYPO3\CMS\Scheduler\Task\OptimizeDatabaseTableTask'
-frequency: 86400
+execution:
+  frequency: 86400
 parameters:
-  selectedTables:
+  selected_tables:
     - sys_log
     - sys_history

@@ -9,3 +9,20 @@ services:
     exclude:
       - '../Classes/Configuration/TaskDefinition.php'
       - '../Classes/Configuration/InvalidTaskDefinitionException.php'
+      - '../Classes/Persistence/UnknownTaskTypeException.php'
+      - '../Classes/Service/SynchronizationResult.php'
+      # Each storage only compiles against its own TYPO3 version; Services.php picks one.
+      - '../Classes/Persistence/Storage/*'
+
+  # Public so integrations and functional tests can resolve them from the container.
+  MaikSchneider\SchedulerAsCode\Service\TaskSynchronizer:
+    public: true
+  MaikSchneider\SchedulerAsCode\Service\TaskExporter:
+    public: true
+  MaikSchneider\SchedulerAsCode\Configuration\TaskDefinitionProvider:
+    public: true
+
+  cache.scheduler_as_code:
+    class: TYPO3\CMS\Core\Cache\Frontend\FrontendInterface
+    factory: ['@TYPO3\CMS\Core\Cache\CacheManager', 'getCache']
+    arguments: ['scheduler_as_code']

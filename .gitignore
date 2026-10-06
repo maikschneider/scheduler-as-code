@@ -12,3 +12,4 @@ config/sites/
 config/system/
 .Build
 .vscode/
+config/scheduler/

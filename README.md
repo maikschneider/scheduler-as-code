@@ -13,41 +13,116 @@ tasks a project is supposed to run. This extension makes the repository the sour
 | **Extension key** | `scheduler_as_code` |
 | **License** | GPL-2.0-or-later |
 
-> **Status:** alpha, under development. The file format below may still change.
+> **Status:** alpha. The file format may still change.
+
+## How it works
+
+- **Task files** live in `config/scheduler/`, one task per file.
+- **Import is automatic.** When TYPO3 boots and the task files changed, or the caches were
+  flushed, new files create tasks and changed files update them. A regular deployment that
+  flushes caches needs no extra step.
+- **Removing a file disables its task.** The task stays in the database, marked
+  *File removed* in the Scheduler module. Restoring the file enables it again.
+- **Files win.** A file-managed task that is deleted in the backend comes back on the next
+  import.
+- **The Scheduler module marks file-managed tasks** with a *Managed in file* badge.
+
+Runtime state (last execution, running executions, failures) is never touched by an import.
+
+## Getting started
+
+Export the tasks you already have, then commit the files:
+
+```bash
+vendor/bin/typo3 scheduler:export
+git add config/scheduler
+```
+
+| Command | |
+|---|---|
+| `scheduler:export` | Export all tasks that are not linked to a file yet |
+| `scheduler:export 3 7` | Export the tasks with uid 3 and 7 |
+| `scheduler:export 3 --identifier=nightly-cleanup` | Choose the file name |
+| `scheduler:export --force` | Also re-export linked tasks, overwriting their files |
+
+Exported tasks are linked to their file at once, so the next import finds them unchanged.
 
 ## Task files
 
-Each task is one YAML file in `config/scheduler/`. The file name, without extension, is the
-task's identifier and links the file to its database record, so renaming a file creates a new
-task.
+The file name, without extension, is the task's identifier and links the file to its database
+record. Renaming a file therefore creates a new task and disables the old one.
 
 ```yaml
 # config/scheduler/cleanup-deleted.yaml
+type: 'cleanup:deletedrecords'
 description: 'Remove deleted records older than 30 days'
-command: 'cleanup:deletedrecords'
-options:
-  min-age: 30
-frequency: '0 3 * * *'
 group: 'Maintenance'
+execution:
+  frequency: '0 3 * * *'
+parameters:
+  options:
+    min-age: 30
 ```
 
+| Key | | |
+|---|---|---|
+| `type` | required | A schedulable console command, or a task class |
+| `description` | | Shown in the Scheduler module |
+| `group` | | Task group by name; created if it does not exist |
+| `disabled` | | `true` to import the task disabled |
+| `priority` | | `50`, `100` (default) or `150`; TYPO3 14 only |
+| `execution.frequency` | | Cron expression, or an interval in seconds |
+| `execution.start` | | First run; required for a task without frequency, which runs once |
+| `execution.end` | | Last run |
+| `execution.multiple` | | `true` to allow parallel executions |
+| `parameters` | | Task settings, see below |
+
+Dates accept anything PHP's `DateTimeImmutable` understands, e.g. `'2026-01-01 04:00'`.
+
+### Parameters
+
+For **console commands**, arguments and options are plain maps. A flag is `true`:
+
 ```yaml
-# config/scheduler/optimize_tables.yaml
-type: 'TYPO3\CMS\Scheduler\Task\OptimizeDatabaseTableTask'
-frequency: 86400
 parameters:
-  selectedTables:
+  arguments:
+    table: sys_log
+  options:
+    min-age: 30
+    dry-run: true
+```
+
+For **task classes**, parameters are the task's own settings and differ between TYPO3
+versions: TCA field names on TYPO3 14, class properties on TYPO3 13.
+
+```yaml
+type: 'TYPO3\CMS\Scheduler\Task\OptimizeDatabaseTableTask'
+execution:
+  frequency: 86400
+parameters:
+  selected_tables:          # TYPO3 13: selectedTables
     - sys_log
     - sys_history
 ```
 
-A file needs either `command` (a schedulable console command) or `type` (a task class).
-Identifiers use lowercase letters, digits, `-` and `_`.
+`scheduler:export` writes the right names for the running version.
+
+## Troubleshooting
+
+Import problems are logged, never shown to visitors:
+
+- A file that is not valid YAML, or misses `type` or `execution`, stops the import until the
+  file changes.
+- A task whose type does not exist (e.g. an uninstalled extension) is skipped; the others
+  are imported.
+- If the database schema is not up to date yet during a deployment, the import is retried
+  on the next boot.
 
 ## Installation
 
 ```bash
 composer require maikschneider/scheduler-as-code
+vendor/bin/typo3 extension:setup
 ```
 
 ## Development

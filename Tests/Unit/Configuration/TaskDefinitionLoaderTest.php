@@ -20,8 +20,8 @@ final class TaskDefinitionLoaderTest extends UnitTestCase
         $definitions = (new TaskDefinitionLoader())->loadFromDirectory(self::FIXTURES . 'valid');
 
         self::assertSame(['cleanup-deleted', 'optimize_tables'], array_keys($definitions));
-        self::assertSame('cleanup:deletedrecords', $definitions['cleanup-deleted']->configuration['command']);
-        self::assertSame(['min-age' => 30], $definitions['cleanup-deleted']->configuration['options']);
+        self::assertSame('cleanup:deletedrecords', $definitions['cleanup-deleted']->configuration['type']);
+        self::assertSame(['options' => ['min-age' => 30]], $definitions['cleanup-deleted']->configuration['parameters']);
         self::assertSame(self::FIXTURES . 'valid/optimize_tables.yml', $definitions['optimize_tables']->sourceFile);
     }
 
@@ -49,7 +49,9 @@ final class TaskDefinitionLoaderTest extends UnitTestCase
             'file name is not an identifier' => ['invalid-name', 1791360002],
             'YAML syntax error' => ['invalid-yaml', 1791360003],
             'list instead of mapping' => ['list', 1791360004],
-            'neither command nor type' => ['missing-type', 1791360005],
+            'no type' => ['missing-type', 1791360005],
+            'neither frequency nor start' => ['missing-execution', 1791360006],
+            'parameters is not a mapping' => ['invalid-parameters', 1791360007],
         ];
     }
 

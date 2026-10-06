@@ -77,10 +77,23 @@ final class TaskDefinitionLoader
             );
         }
         /** @var array<string, mixed> $configuration */
-        if (!isset($configuration['command']) && !isset($configuration['type'])) {
+        if (!is_string($configuration['type'] ?? null) || $configuration['type'] === '') {
             throw new InvalidTaskDefinitionException(
-                sprintf('Scheduler task file "%s" needs either "command" or "type".', $file),
+                sprintf('Scheduler task file "%s" needs a "type": a console command name or a task class.', $file),
                 1791360005
+            );
+        }
+        $execution = $configuration['execution'] ?? [];
+        if (!is_array($execution) || (!isset($execution['frequency']) && !isset($execution['start']))) {
+            throw new InvalidTaskDefinitionException(
+                sprintf('Scheduler task file "%s" needs "execution.frequency", or "execution.start" for a single run.', $file),
+                1791360006
+            );
+        }
+        if (isset($configuration['parameters']) && !is_array($configuration['parameters'])) {
+            throw new InvalidTaskDefinitionException(
+                sprintf('"parameters" in scheduler task file "%s" must be a mapping.', $file),
+                1791360007
             );
         }
 

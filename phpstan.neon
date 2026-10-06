@@ -7,6 +7,10 @@ parameters:
 
 	level: 7
 
+	typo3:
+		requestGetAttributeMapping:
+			route: TYPO3\CMS\Backend\Routing\Route|null
+
 	bootstrapFiles:
 		- vendor/autoload.php
 

@@ -1,3 +1,2 @@
-type: 'cache:flush'
 execution:
   frequency: 60
