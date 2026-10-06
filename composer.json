@@ -37,6 +37,7 @@
 		"maikschneider/scheduler-as-code-fixture": "@dev",
 		"move-elevator/composer-translation-validator": "^1.3",
 		"phpstan/extension-installer": "^1.3",
+		"phpunit/phpcov": "^10.0 || ^11.0 || ^12.0 || ^13.0",
 		"saschaegerer/phpstan-typo3": "^3.0",
 		"typo3/cms-install": "^13.4 || ^14.3",
 		"typo3/cms-lowlevel": "^13.4 || ^14.3",
@@ -112,6 +113,14 @@
 			"@php:stan",
 			"@language:lint"
 		],
+		"test:coverage": [
+			"@test:coverage:unit",
+			"@test:coverage:functional",
+			"@test:coverage:report"
+		],
+		"test:coverage:functional": "XDEBUG_MODE=coverage php -d pcov.enabled=1 -d pcov.directory=\"$PWD/Classes\" vendor/bin/phpunit --testsuite Functional --coverage-php .Build/coverage/functional.cov",
+		"test:coverage:report": "phpcov merge --html .Build/coverage/html --clover .Build/coverage/clover.xml --text php://stdout .Build/coverage",
+		"test:coverage:unit": "XDEBUG_MODE=coverage php -d pcov.enabled=1 -d pcov.directory=\"$PWD/Classes\" vendor/bin/phpunit --testsuite Unit --coverage-php .Build/coverage/unit.cov",
 		"test:functional": "phpunit --testsuite Functional",
 		"test:unit": "phpunit --testsuite Unit"
 	}

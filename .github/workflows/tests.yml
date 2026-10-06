@@ -66,3 +66,96 @@ jobs:
 
       - name: Run functional tests
         run: ddev exec vendor/bin/phpunit --testsuite Functional
+
+  # Each TYPO3 major only loads its own task storage, so coverage is collected per version and
+  # merged afterwards. Both runs and the merge use the same PHP version, since the .cov files
+  # are only readable by the php-code-coverage version that wrote them.
+  coverage:
+    name: Coverage (TYPO3 ${{ matrix.typo3-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        typo3-version: ["13.4", "14.3"]
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      typo3DatabaseDriver: pdo_mysql
+      typo3DatabaseName: db
+      typo3DatabaseUsername: root
+      typo3DatabasePassword: root
+      typo3DatabaseHost: 127.0.0.1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: pcov
+
+      - name: Install Composer dependencies
+        run: composer update --with=typo3/cms-core:"^${{ matrix.typo3-version }}"
+
+      - name: Collect unit test coverage
+        run: composer test:coverage:unit
+
+      - name: Collect functional test coverage
+        run: composer test:coverage:functional
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-typo3-${{ matrix.typo3-version }}
+          path: .Build/coverage/*.cov
+          retention-days: 1
+
+  coverage-report:
+    name: Coverage report
+    needs: coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: pcov
+
+      - name: Install Composer dependencies
+        run: composer update
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-typo3-*
+          path: .Build/coverage
+
+      - name: Merge coverage
+        run: |
+          composer test:coverage:report | tee coverage.txt
+          {
+            echo '```'
+            sed -n '/Summary:/,$p' coverage.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            .Build/coverage/html
+            .Build/coverage/clover.xml

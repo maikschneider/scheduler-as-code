@@ -10,6 +10,8 @@ database:
 use_dns_when_possible: true
 composer_version: "2"
 timezone: Europe/Berlin
+# Coverage driver for `composer test:coverage`; .ddev/php/pcov.ini keeps it off otherwise.
+webimage_extra_packages: ["php${DDEV_PHP_VERSION}-pcov"]
 
 # Credentials for typo3/testing-framework functional tests. It creates and drops its own
 # databases per test case, which the project user is not allowed to do.
