@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MaikSchneider\SchedulerAsCode\Configuration;
 
+use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 use TYPO3\CMS\Core\Package\PackageManager;
 use TYPO3\CMS\Core\Site\Set\SetRegistry;
@@ -75,7 +76,12 @@ class SiteSetTaskDirectories
                 if (!is_file($configFile)) {
                     continue;
                 }
-                $configuration = Yaml::parseFile($configFile);
+                try {
+                    $configuration = Yaml::parseFile($configFile);
+                } catch (ParseException) {
+                    // TYPO3 reports invalid sets itself; one must not block the tasks of others.
+                    continue;
+                }
                 if (is_array($configuration) && is_string($configuration['name'] ?? null)) {
                     $sets[$configuration['name']] = $directory;
                 }
