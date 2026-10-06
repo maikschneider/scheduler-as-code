@@ -6,6 +6,7 @@ namespace MaikSchneider\SchedulerAsCode\Tests\Functional;
 
 use MaikSchneider\SchedulerAsCode\Configuration\TaskDefinitionProvider;
 use MaikSchneider\SchedulerAsCode\Service\TaskExporter;
+use MaikSchneider\SchedulerAsCode\Service\TaskStateResolver;
 use MaikSchneider\SchedulerAsCode\Service\TaskSynchronizer;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -156,6 +157,160 @@ final class TaskSynchronizationTest extends FunctionalTestCase
 
         self::assertArrayHasKey('broken', $result->failed);
         self::assertSame(['cleanup'], $result->created);
+    }
+
+    #[Test]
+    public function unknownParameterOfATaskClassIsReported(): void
+    {
+        if ($this->isTypo3v14()) {
+            self::markTestSkipped('TYPO3 14 keeps parameters without a column in the "parameters" field.');
+        }
+        $this->writeTask('optimize', <<<YAML
+            type: 'TYPO3\\CMS\\Scheduler\\Task\\OptimizeDatabaseTableTask'
+            execution:
+              frequency: 86400
+            parameters:
+              tablesToOptimize: [sys_log]
+            YAML);
+
+        $result = $this->synchronize();
+
+        self::assertStringContainsString('has no parameter "tablesToOptimize"', $result->failed['optimize'] ?? '');
+        self::assertSame([], $result->created);
+    }
+
+    #[Test]
+    public function onlyTheSettingsOfATaskClassAreExported(): void
+    {
+        if ($this->isTypo3v14()) {
+            self::markTestSkipped('TYPO3 14 only runs task types registered in TCA.');
+        }
+        $this->writeTask('fixture', <<<YAML
+            type: 'MaikSchneider\\SchedulerAsCodeFixture\\Task\\FixtureTask'
+            execution:
+              frequency: 60
+            parameters:
+              label: nightly
+            YAML);
+        $this->synchronize();
+        $row = $this->findRow('fixture');
+
+        $exported = (string)file_get_contents($this->get(TaskExporter::class)->export($row));
+
+        self::assertStringContainsString('label: nightly', $exported);
+        self::assertStringContainsString('lastSeen: null', $exported);
+        self::assertStringNotContainsString('neverSet', $exported);
+        self::assertStringNotContainsString('instances', $exported);
+        self::assertStringNotContainsString('taskUid', $exported);
+        self::assertFalse($this->synchronize()->hasChanges());
+    }
+
+    #[Test]
+    public function invalidDateIsReportedWithoutStoppingOtherTasks(): void
+    {
+        $this->writeTask('broken', "type: 'cleanup:deletedrecords'\nexecution:\n  frequency: 60\n  start: 'next full moon'\n");
+        $this->writeTask('cleanup', $this->minimalTask());
+
+        $result = $this->synchronize();
+
+        self::assertStringContainsString('"next full moon" is not a valid date.', $result->failed['broken'] ?? '');
+        self::assertSame(['cleanup'], $result->created);
+    }
+
+    #[Test]
+    public function tasksOfTheSameGroupShareOneGroupRecord(): void
+    {
+        $this->writeTask('first', "type: 'cleanup:deletedrecords'\ngroup: 'Maintenance'\nexecution:\n  frequency: 60\n");
+        $this->writeTask('second', "type: 'cleanup:deletedrecords'\ngroup: 'Maintenance'\nexecution:\n  frequency: 120\n");
+
+        $this->synchronize();
+
+        $group = (int)$this->findRow('first')['task_group'];
+        self::assertGreaterThan(0, $group);
+        self::assertSame($group, (int)$this->findRow('second')['task_group']);
+        self::assertSame(1, $this->getConnectionPool()->getConnectionForTable('tx_scheduler_task_group')->count('uid', 'tx_scheduler_task_group', []));
+    }
+
+    #[Test]
+    public function taskWithoutGroupHasNone(): void
+    {
+        $this->writeTask('cleanup', $this->minimalTask());
+
+        $this->synchronize();
+
+        self::assertSame(0, (int)$this->findRow('cleanup')['task_group']);
+    }
+
+    #[Test]
+    public function fileCanDisableItsTask(): void
+    {
+        $this->writeTask('cleanup', "type: 'cleanup:deletedrecords'\ndisabled: true\nexecution:\n  frequency: '0 3 * * *'\n");
+
+        $this->synchronize();
+
+        self::assertSame(1, (int)$this->findRow('cleanup')['disable']);
+    }
+
+    #[Test]
+    public function orphanedTaskIsDisabledOnlyOnce(): void
+    {
+        $this->writeTask('cleanup', $this->minimalTask());
+        $this->synchronize();
+        unlink($this->directory . '/cleanup.yaml');
+        $this->synchronize();
+
+        $result = $this->synchronize();
+
+        self::assertFalse($result->hasChanges());
+    }
+
+    #[Test]
+    public function taskPastItsEndIsImportedDisabled(): void
+    {
+        $this->writeTask('cleanup', "type: 'cleanup:deletedrecords'\nexecution:\n  frequency: 60\n  start: '2020-01-01'\n  end: '2021-01-01'\n");
+
+        $result = $this->synchronize();
+
+        self::assertSame(['cleanup'], $result->created);
+        self::assertSame(1, (int)$this->findRow('cleanup')['disable']);
+    }
+
+    #[Test]
+    public function priorityIsImportedAndExported(): void
+    {
+        if (!$this->isTypo3v14()) {
+            self::markTestSkipped('Task priorities exist since TYPO3 14.');
+        }
+        $this->writeTask('cleanup', "type: 'cleanup:deletedrecords'\npriority: 50\nexecution:\n  frequency: 60\n");
+        $this->synchronize();
+        $row = $this->findRow('cleanup');
+
+        self::assertSame(50, (int)$row['priority']);
+        self::assertStringContainsString('priority: 50', (string)file_get_contents($this->get(TaskExporter::class)->export($row)));
+        self::assertFalse($this->synchronize()->hasChanges());
+    }
+
+    #[Test]
+    public function exportedNativeTaskImportsAsUnchanged(): void
+    {
+        [$table, $days] = $this->isTypo3v14() ? ['table', 'number_of_days'] : ['table', 'numberOfDays'];
+        $this->writeTask('garbage', <<<YAML
+            type: 'TYPO3\\CMS\\Scheduler\\Task\\TableGarbageCollectionTask'
+            execution:
+              frequency: 86400
+            parameters:
+              {$table}: sys_log
+              {$days}: 30
+            YAML);
+        $this->synchronize();
+        $row = $this->findRow('garbage');
+
+        $exported = (string)file_get_contents($this->get(TaskExporter::class)->export($row));
+
+        self::assertStringContainsString($table . ': sys_log', $exported);
+        self::assertStringContainsString($days . ': 30', $exported);
+        self::assertFalse($this->synchronize()->hasChanges());
+        self::assertFalse($this->get(TaskStateResolver::class)->getStates()[(int)$row['uid']]['stale']);
     }
 
     #[Test]

@@ -26,6 +26,23 @@ final class TaskDefinitionLoaderTest extends UnitTestCase
     }
 
     #[Test]
+    public function trailingSlashOfTheDirectoryIsIgnored(): void
+    {
+        $definitions = (new TaskDefinitionLoader())->loadFromDirectory(self::FIXTURES . 'valid/');
+
+        self::assertSame(self::FIXTURES . 'valid/cleanup-deleted.yaml', $definitions['cleanup-deleted']->sourceFile);
+    }
+
+    #[Test]
+    public function singleFileIsLoadedWithItsNameAsIdentifier(): void
+    {
+        $definition = (new TaskDefinitionLoader())->loadFile(self::FIXTURES . 'valid/cleanup-deleted.yaml');
+
+        self::assertSame('cleanup-deleted', $definition->identifier);
+        self::assertSame(self::FIXTURES . 'valid/cleanup-deleted.yaml', $definition->sourceFile);
+    }
+
+    #[Test]
     public function missingDirectoryYieldsNoDefinitions(): void
     {
         self::assertSame([], (new TaskDefinitionLoader())->loadFromDirectory(self::FIXTURES . 'does-not-exist'));

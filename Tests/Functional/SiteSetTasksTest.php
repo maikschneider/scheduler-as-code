@@ -111,6 +111,16 @@ final class SiteSetTasksTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function schedulerDirectoryOutsideASetIsIgnored(): void
+    {
+        $this->writeSite(['maintenance']);
+
+        $definitions = $this->get(TaskDefinitionProvider::class)->getDefinitions();
+
+        self::assertArrayNotHasKey('stray-cleanup', $definitions);
+    }
+
+    #[Test]
     public function addingASetToASiteChangesTheFingerprint(): void
     {
         $provider = $this->get(TaskDefinitionProvider::class);

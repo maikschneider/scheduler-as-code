@@ -18,6 +18,17 @@ ddev composer test:unit
 ddev composer test:functional
 ```
 
+## Code coverage
+
+```bash
+ddev composer test:coverage   # report in .Build/coverage/html
+```
+
+ddev ships PCOV switched off; the script enables it for the run. The report covers the TYPO3
+version currently installed, so the storage of the other major version shows as uncovered.
+CI collects coverage on TYPO3 13.4 and 14.3 and merges both into the `coverage-report`
+artifact, with a summary on the workflow run.
+
 ## Conventions
 
 - TYPO3 Coding Guidelines; `php-cs-fixer` is the arbiter.

@@ -8,6 +8,7 @@
 [![Supported TYPO3 versions](https://typo3-badges.dev/badge/scheduler_as_code/typo3/shields.svg)](https://extensions.typo3.org/extension/scheduler_as_code)
 [![Supported PHP versions](https://img.shields.io/packagist/dependency-v/maikschneider/scheduler-as-code/php?logo=php)](https://packagist.org/packages/maikschneider/scheduler-as-code)
 [![Tests](https://img.shields.io/github/actions/workflow/status/maikschneider/scheduler-as-code/tests.yml?label=tests&logo=github)](https://github.com/maikschneider/scheduler-as-code/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/maikschneider/scheduler-as-code?logo=codecov)](https://app.codecov.io/gh/maikschneider/scheduler-as-code)
 [![CGL](https://img.shields.io/github/actions/workflow/status/maikschneider/scheduler-as-code/sca.yml?label=cgl&logo=github)](https://github.com/maikschneider/scheduler-as-code/actions/workflows/sca.yml)
 [![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue.svg)](LICENSE.md)
 

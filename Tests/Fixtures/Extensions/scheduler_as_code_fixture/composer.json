@@ -6,6 +6,11 @@
 	"require": {
 		"maikschneider/scheduler-as-code": "*"
 	},
+	"autoload": {
+		"psr-4": {
+			"MaikSchneider\\SchedulerAsCodeFixture\\": "Classes/"
+		}
+	},
 	"extra": {
 		"typo3/cms": {
 			"Package": {
