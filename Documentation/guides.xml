@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<guides xmlns="https://www.phpdoc.org/guides"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://www.phpdoc.org/guides ../vendor/phpdocumentor/guides-cli/resources/schema/guides.xsd"
+        links-are-relative="true"
+        default-code-language="yaml"
+>
+    <extension class="\T3Docs\Typo3DocsTheme\DependencyInjection\Typo3DocsThemeExtension"
+               project-home="https://github.com/maikschneider/scheduler-as-code"
+               project-contact="https://github.com/maikschneider/scheduler-as-code/issues"
+               project-repository="https://github.com/maikschneider/scheduler-as-code"
+               project-issues="https://github.com/maikschneider/scheduler-as-code/issues"
+               edit-on-github-branch="main"
+               edit-on-github="maikschneider/scheduler-as-code"
+               typo3-core-preferred="13.4"
+               interlink-shortcode="maikschneider/scheduler-as-code"
+    />
+    <project title="Scheduler as Code"
+             release="0.1.0"
+             version="0.1"
+             copyright="since 2026 by Maik Schneider &amp; Contributors"
+    />
+    <inventory id="t3coreapi"
+               url="https://docs.typo3.org/m/typo3/reference-coreapi/main/en-us/"
+    />
+    <inventory id="ext_scheduler"
+               url="https://docs.typo3.org/c/typo3/cms-scheduler/main/en-us/"
+    />
+</guides>

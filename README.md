@@ -15,6 +15,9 @@ tasks a project is supposed to run. This extension makes the repository the sour
 
 > **Status:** alpha. The file format may still change.
 
+The full documentation lives in [`Documentation/`](Documentation/Index.rst) and is
+rendered on [docs.typo3.org](https://docs.typo3.org/p/maikschneider/scheduler-as-code/main/en-us/).
+
 ## How it works
 
 - **Task files** live in `config/scheduler/`, one task per file.

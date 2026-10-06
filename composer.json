@@ -20,7 +20,8 @@
 	],
 	"support": {
 		"issues": "https://github.com/maikschneider/scheduler-as-code/issues",
-		"source": "https://github.com/maikschneider/scheduler-as-code"
+		"source": "https://github.com/maikschneider/scheduler-as-code",
+		"docs": "https://docs.typo3.org/p/maikschneider/scheduler-as-code/main/en-us/"
 	},
 	"require": {
 		"php": "^8.2",
